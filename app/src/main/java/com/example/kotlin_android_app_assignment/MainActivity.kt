@@ -1,20 +1,35 @@
 package com.example.kotlin_android_app_assignment
 
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
 import com.example.kotlin_android_app_assignment.databinding.ActivityMainBinding
+import okhttp3.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+
+
+data class User(
+    var id: String,
+    var first_name: String,
+    var last_name: String,
+    var email: String,
+    var gender: String,
+    var ip_address: String
+)
 
 class MainActivity : AppCompatActivity() {
-
+    private val client = OkHttpClient()
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    lateinit var loginButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,16 +37,29 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(binding.toolbar)
+        binding.loginButton.setOnClickListener(View.OnClickListener {
+            val request = Request.Builder().url("https://comp4107.herokuapp.com/user").build()
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
+            client.newCall(request).enqueue(object : Callback {
 
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-        }
+                override fun onFailure(call: Call, e: IOException) {}
+                override fun onResponse(call: Call, response: Response) {
+                    var userObject = JSONObject("{\'list\':"+response.body()?.string()+'}')
+                    var userList = userObject.getJSONArray("list")
+                    for (i in 0 until userList.length()) {
+                        var user = userList[i]
+                        // Your code here
+                    }
+                }
+
+            })
+
+            var username: String = binding.username.text.toString()
+            var password: String = binding.password.text.toString()
+
+        })
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
