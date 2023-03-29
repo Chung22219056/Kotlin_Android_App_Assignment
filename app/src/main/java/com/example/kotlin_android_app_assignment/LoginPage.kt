@@ -6,49 +6,61 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.kotlin_android_app_assignment.databinding.ActivityMainBinding
+import com.example.kotlin_android_app_assignment.databinding.LoginPageBinding
 import okhttp3.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 
 
+data class User(
+    var id: String,
+//    var first_name: String,
+//    var last_name: String,
+//    var email: String,
+//    var gender: String,
+//    var ip_address: String
+)
 
 
-class MainActivity : AppCompatActivity() {
+class LoginPage : AppCompatActivity() {
     private val client = OkHttpClient()
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: LoginPageBinding
     lateinit var loginButton: Button
-    var recyclerView: RecyclerView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = LoginPageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        replaceFragment(Home())
+        binding.loginButton.setOnClickListener(View.OnClickListener {
+            val request = Request.Builder().url("https://comp4107.herokuapp.com/user").build()
 
-        binding.bottomNavigationView.setOnItemSelectedListener {
+            client.newCall(request).enqueue(object : Callback {
 
-            when (it.itemId) {
-                R.id.home -> replaceFragment(GameTypePage())
-                R.id.message -> replaceFragment(FirstFragment())
-//                R.id.account -> replaceFragment(LoginPage())
-                else -> {
+                override fun onFailure(call: Call, e: IOException) {}
+                override fun onResponse(call: Call, response: Response) {
+                    var userObject = JSONObject("{\'list\':"+response.body()?.string()+'}')
+                    var userList = userObject.getJSONArray("list")
+                    for (i in 0 until userList.length()) {
+                        var user = userList[i]
+                        // Your code here
+                    }
                 }
-            }
 
-            true
+            })
 
-        }
+            var username: String = binding.username.text.toString()
+            var password: String = binding.password.text.toString()
+
+        })
+
 
     }
 
@@ -72,12 +84,5 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
-    }
-
-    private fun replaceFragment(fragment: Fragment) {
-        val fragmentManager = supportFragmentManager
-        val fragmentTransaction = fragmentManager.beginTransaction()
-        fragmentTransaction.replace(R.id.frame_layout, fragment)
-        fragmentTransaction.commit()
     }
 }
